@@ -7,29 +7,29 @@ def make_class(gender, age, mask):
     if age < 30:
         if gender == 'male':
             if mask.find('incorrect') != -1: label = 6
-            elif mask == 'normal': label = 12
+            elif mask.find('normal') != -1: label = 12
             else: label = 0
         else: # female
             if mask.find('incorrect') != -1: label = 9
-            elif mask == 'normal': label = 15
+            elif mask.find('normal') != -1: label = 15
             else: label = 3
     elif 30 <= age < 60:
         if gender == 'male':
             if mask.find('incorrect') != -1: label = 7
-            elif mask == 'normal': label = 13
+            elif mask.find('normal') != -1: label = 13
             else: label = 1
         else: # female
             if mask.find('incorrect') != -1: label = 10
-            elif mask == 'normal': label = 16
+            elif mask.find('normal') != -1: label = 16
             else: label = 4
     else: # over 60
         if gender == 'male':
             if mask.find('incorrect') != -1: label = 8
-            elif mask == 'normal': label = 14
+            elif mask.find('normal') != -1: label = 14
             else: label = 2
         else:
             if mask.find('incorrect') != -1: label = 11
-            elif mask == 'normal': label = 17
+            elif mask.find('normal') != -1: label = 17
             else: label = 5
     return label
 
