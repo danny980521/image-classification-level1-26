@@ -85,7 +85,7 @@ class ResNet(nn.Module):
         self.in_channels = 64
         # change first conv1 input_channel 3 -> 1
         self.conv1 = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=3, padding=1, bias=False),
+            nn.Conv2d(3, 64, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True))
         #we use a different inputsize than the original paper
@@ -93,9 +93,9 @@ class ResNet(nn.Module):
         self.conv2_x = self._make_layer(block, 64, num_block[0], 1)
         self.conv3_x = self._make_layer(block, 128, num_block[1], 2)
         self.conv4_x = self._make_layer(block, 256, num_block[2], 2)
-        self.conv5_x = self._make_layer(block, 512, num_block[3], 2)
+        # self.conv5_x = self._make_layer(block, 512, num_block[3], 2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.fc = nn.Linear(256 * block.expansion, num_classes)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         """make resnet layers(by layer i didnt mean this 'layer' was the
@@ -125,7 +125,7 @@ class ResNet(nn.Module):
         output = self.conv2_x(output)
         output = self.conv3_x(output)
         output = self.conv4_x(output)
-        output = self.conv5_x(output)
+        # output = self.conv5_x(output)
         output = self.avg_pool(output)
         output = output.view(output.size(0), -1)
         output = self.fc(output)
