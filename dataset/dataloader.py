@@ -7,8 +7,10 @@ from . import data
 def getDataloader(args):
     
     total_train_dataset = data.Data(args, args.train_csv,
-                            transform = transforms.Compose([transforms.RandomHorizontalFlip(),]),
-                            train=True)
+                            transform = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                                        transforms.ToTensor(),
+                                                        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.2, 0.2, 0.2)), ]),
+                                                        train=True)
     train_len = int(args.train_ratio*len(total_train_dataset))
     val_len = len(total_train_dataset) - train_len
     train_dataset, val_dataset = torch.utils.data.random_split(total_train_dataset, lengths=[train_len, val_len])

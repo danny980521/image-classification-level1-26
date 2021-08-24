@@ -6,7 +6,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from dataset.dataloader import getDataloader
 import torchvision
-# from model.resnet import ResNet
+from models.model import get_model
 import argparse
 
 def train(args):
@@ -16,12 +16,16 @@ def train(args):
     device = 'cuda'
     criterion = nn.CrossEntropyLoss()
     
-    if args.model_name == 'resnet18':
-        model = torchvision.models.resnet18(pretrained=False)
-        model.fc = torch.nn.Linear(in_features=512, out_features=18, bias=True)
-    elif args.model_name == 'vgg16':
-        model = torchvision.models.vgg16(pretrained=False)
-        model.classifier[6] = nn.Linear(in_features=4096, out_features=18, bias=True)
+    # torchvision models
+#     if args.model_name == 'resnet18':
+#         model = torchvision.models.resnet18(pretrained=False)
+#         model.fc = torch.nn.Linear(in_features=512, out_features=18, bias=True)
+#     elif args.model_name == 'vgg16':
+#         model = torchvision.models.vgg16(pretrained=False)
+#         model.classifier[6] = nn.Linear(in_features=4096, out_features=18, bias=True)
+    
+    # Custom models
+    model = get_model(args)
     
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     
@@ -75,7 +79,7 @@ def train(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pretrained', default=None, type=str)
-    parser.add_argument('--train_csv', default='/opt/ml/input/data/train/train_label.csv', type=str)
+    parser.add_argument('--train_csv', default='/opt/ml/input/data/train/train_label_correct.csv', type=str)
     parser.add_argument('--model_name', default='resnet', type=str)
     parser.add_argument('--epochs', type=int, default=50, help='number of training epochs')
     parser.add_argument('--train_ratio', type=float, default=0.9)

@@ -1,7 +1,7 @@
 import torch
 import pandas as pd
 from torch.utils.data import Dataset
-import imageio
+from PIL import Image
 
 class Data(Dataset):
     def __init__(self, args, path, transform, train=True):
@@ -13,7 +13,7 @@ class Data(Dataset):
         self.labels = self.data_csv['class'] if self.train else None
         
     def __getitem__(self, ind):
-        img = torch.tensor(imageio.imread(self.img_paths[ind]), dtype=float)
+        img = Image.open(self.img_paths[ind])
         if self.transform is not None:
             img = self.transform(img)
         if not self.train:
