@@ -6,13 +6,20 @@ from PIL import Image
 from albumentations import *
 from albumentations.pytorch import ToTensorV2
 
-class Data(Dataset):
+class MultiLabels(Dataset):
     def __init__(self, args, path, train=True):
         self.args = args
         self.train = train
         self.data_csv = pd.read_csv(path)
         self.img_paths= self.data_csv['img_path']
-        self.labels = self.data_csv['class'] if self.train else None
+        
+        if self.train:
+            self.labels = self.data_csv['class']
+            self.genders = self.data_csv['gender']
+            self.ages = self.data_csv['age']
+            self.masks = self.data_csv['mask']
+        else:
+            self.labels, self.genders, self.ages, self.masks = None, None, None, None
     
     def set_transform(self, transform):
         self.transform = transform
@@ -24,15 +31,10 @@ class Data(Dataset):
         if not self.train:
             return img
         label = self.labels[ind]
-        return img, label
-        '''
-        label_tensor = torch.zeros(len(self.labels.unique()), dtype=torch.long) if self.train else None
-        label_ind = self.labels[ind]
-        label_tensor[label_ind] = 1.
-        # label = torch.tensor(self.labels, dtype=torch.long)
-        return img, label_tensor
-        '''
-        
+        gender = self.genders[ind]
+        age = self.ages[ind]
+        mask = self.masks[ind]
+        return img, label, gender, age, mask
     
     def __len__(self):
         return len(self.data_csv)

@@ -30,7 +30,7 @@ def getDataloader(args):
             ToTensorV2(p=1.0),
         ], p=1.0)
     
-    dataset = data.Data(args, args.train_csv, train=True)
+    dataset = multi_labels.MultiLabels(args, args.train_csv, train=True)
     train_len = int(args.train_ratio*len(dataset))
     val_len = len(dataset) - train_len
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_len, val_len])
