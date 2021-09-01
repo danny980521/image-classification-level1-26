@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
-from dataset import TestDataset, MaskBaseDataset
+from dataset import TestDataset, MaskBaseDataset, AgeBaseDataset
 
 
 def load_model(saved_model, num_classes, device):
@@ -32,7 +32,8 @@ def inference(data_dir, model_dir, output_dir, args):
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    num_classes = MaskBaseDataset.num_classes  # 18
+    # num_classes = MaskBaseDataset.num_classes  # 18
+    num_classes = 12
     model = load_model(model_dir, num_classes, device).to(device)
     model.eval()
 
@@ -58,7 +59,8 @@ def inference(data_dir, model_dir, output_dir, args):
             images = images.to(device)
             pred = model(images)
             pred = pred.argmax(dim=-1)
-            preds.extend(pred.cpu().numpy())
+            final_pred = AgeBaseDataset.encode_original_age(pred)
+            preds.extend(final_pred.cpu().numpy())
 
     info['ans'] = preds
     info.to_csv(os.path.join(output_dir, f'output.csv'), index=False)
@@ -70,7 +72,7 @@ if __name__ == '__main__':
 
     # Data and model checkpoints directories
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--resize', type=tuple, default=(96, 128), help='resize size for image when you trained (default: (96, 128))')
+    parser.add_argument('--resize', type=int, default=[256, 192], help='resize size for image when you trained (default: (96, 128))')
     parser.add_argument('--model', type=str, default='BaseModel', help='model type (default: BaseModel)')
 
     # Container environment

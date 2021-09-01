@@ -53,10 +53,19 @@ class MyModel(nn.Module):
         """
         return x
 
-class MyEfficientnet(nn.Module):
+class MyEfficientnet_b0(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
         self.model = timm.create_model('tf_efficientnet_b0', pretrained=True)
+        self.model.classifier = nn.Linear(in_features = self.model.classifier.in_features, out_features = num_classes, bias = True)
+        
+    def forward(self, x):
+        return self.model(x)
+
+class MyEfficientnet_b4(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.model = timm.create_model('tf_efficientnet_b4', pretrained=True)
         self.model.classifier = nn.Linear(in_features = self.model.classifier.in_features, out_features = num_classes, bias = True)
         
     def forward(self, x):

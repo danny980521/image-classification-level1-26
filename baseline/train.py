@@ -267,7 +267,7 @@ def train(data_dir, model_dir, args):
             torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
             print(
                 f"[Val] f1: {score:3.2%}, final_f1: {final_score:3.2%}, acc : {val_acc:4.2%}, loss: {val_loss:4.2} || "
-                f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
+                f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}, best f1 score: {best_val_f1}"
             )
             logger.add_scalar("Val/loss", val_loss, epoch)
             logger.add_scalar("Val/accuracy", val_acc, epoch)
