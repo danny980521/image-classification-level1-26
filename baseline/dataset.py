@@ -10,6 +10,8 @@ from PIL import Image
 from torch.utils.data import Dataset, Subset, random_split
 from torchvision import transforms
 from torchvision.transforms import *
+import pandas as pd
+from pandas_streaming.df import train_test_apart_stratify
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -234,6 +236,130 @@ class MaskBaseDataset(Dataset):
         n_train = len(self) - n_val
         train_set, val_set = random_split(self, [n_train, n_val])
         return train_set, val_set
+
+
+class AgeLabels_2(int, Enum):
+    Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+
+    @classmethod
+    def from_number(cls, value: str) -> int:
+        try:
+            value = int(value)
+        except Exception:
+            raise ValueError(f"Age value should be numeric, {value}")
+
+        if 0 < value <= 18:
+            return cls.Zero
+        elif value == 19:
+            return cls.One
+        elif value == 20:
+            return cls.Two
+        elif 21 <= value <= 24:
+            return cls.Three
+        elif 25 <= value <= 29:
+            return cls.Four
+        elif 30 <= value <= 48:
+            return cls.Five
+        elif 49 <= value <= 52:
+            return cls.Seven
+        elif 53 <= value <= 55:
+            return cls.Eight
+        elif 56 <= value <= 57:
+            return cls.Nine
+        elif 58 <= value <= 59:
+            return cls.Ten
+        elif 60 <= value :
+            return cls.Eleven
+
+
+class AgeBaseDataset(MaskBaseDataset):
+    num_classes = 12
+
+    _file_names = {
+        "mask1": MaskLabels.MASK,
+        "mask2": MaskLabels.MASK,
+        "mask3": MaskLabels.MASK,
+        "mask4": MaskLabels.MASK,
+        "mask5": MaskLabels.MASK,
+        "incorrect_mask": MaskLabels.INCORRECT,
+        "normal": MaskLabels.NORMAL
+    }
+    
+    all_labels = [] # 추가
+    indexs = [] # 추가
+    groups = [] # 추가
+    original_age_labels = []
+
+    def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
+        # self.transform = transform
+        super().__init__(data_dir)
+
+    def setup(self):
+        cnt = 0 # 추가
+        profiles = os.listdir(self.data_dir)
+        for profile in profiles:
+            if profile.startswith("."):  # "." 로 시작하는 파일은 무시합니다
+                continue
+
+            img_folder = os.path.join(self.data_dir, profile)
+            for file_name in os.listdir(img_folder):
+                _file_name, ext = os.path.splitext(file_name)
+                if _file_name not in self._file_names:  # "." 로 시작하는 파일 및 invalid 한 파일들은 무시합니다
+                    continue
+
+                img_path = os.path.join(self.data_dir, profile, file_name)  # (resized_data, 000004_male_Asian_54, mask1.jpg)
+                mask_label = self._file_names[_file_name]
+
+                id, gender, race, age = profile.split("_")
+                gender_label = GenderLabels.from_str(gender)
+                org_age_label = AgeLabels.from_number(age)
+                age_label = AgeLabels_2.from_number(age)
+
+                self.image_paths.append(img_path)
+                self.mask_labels.append(mask_label)
+                self.gender_labels.append(gender_label)
+                self.original_age_labels.append(org_age_label)
+                self.age_labels.append(age_label)
+                self.all_labels.append(self.encode_multi_class(mask_label, gender_label, age_label)) # 추가
+                self.indexs.append(cnt) # 추가
+                self.groups.append(id) # 추가
+                cnt += 1 # 추가
+
+    def get_age_label(self, index):
+        return self.original_age_labels[index], self.age_labels[index]
+
+    @staticmethod
+    def encode_original_age(age_label) -> int:
+        original_age_label = torch.zeros_like(age_label)
+        for ind, age in enumerate(age_label):
+            if age <= 4:
+                original_age_label[ind] = 0
+            elif age <= 10:
+                original_age_label[ind] = 1
+            else:
+                original_age_label[ind] = 2
+        return original_age_label
+
+    def __getitem__(self, index):
+        assert self.transform is not None, ".set_tranform 메소드를 이용하여 transform 을 주입해주세요"
+
+        image = self.read_image(index)
+        mask_label = self.get_mask_label(index)
+        gender_label = self.get_gender_label(index)
+        org_age_label, age_label = self.get_age_label(index)
+        multi_class_label = self.encode_multi_class(mask_label, gender_label, age_label)
+
+        image_transform = self.transform(image)
+        return image_transform, org_age_label.value, age_label.value
+    
+    def split_dataset(self) -> Tuple[Subset, Subset]:
+        df = pd.DataFrame({"indexs":self.indexs, "groups":self.groups, "labels":self.age_labels})
+        
+        train, valid = train_test_apart_stratify(df, group="groups", stratify="labels", test_size=self.val_ratio)
+        train_index = train["indexs"].tolist()
+        valid_index = valid["indexs"].tolist()
+        
+        return  [Subset(self, train_index), Subset(self, valid_index)]
 
 
 class MaskSplitByProfileDataset(MaskBaseDataset):

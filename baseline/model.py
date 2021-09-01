@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import timm
 
 
 class BaseModel(nn.Module):
@@ -51,3 +52,12 @@ class MyModel(nn.Module):
         2. 결과로 나온 output 을 return 해주세요
         """
         return x
+
+class MyEfficientnet(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.model = timm.create_model('tf_efficientnet_b0', pretrained=True)
+        self.model.classifier = nn.Linear(in_features = self.model.classifier.in_features, out_features = num_classes, bias = True)
+        
+    def forward(self, x):
+        return self.model(x)
