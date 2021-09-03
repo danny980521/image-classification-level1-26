@@ -41,9 +41,9 @@ def inference(args):
     oof_pred = None
     
     # get 5 best models
+    best_model_paths = []
     for fold_num in range(5):
         model_f1_score = []
-        best_model_paths = []
 
         model_paths = glob.glob(os.path.join(args.fold_dir, f'effb4_{fold_num}_*.pt'))
 
@@ -53,6 +53,7 @@ def inference(args):
         best_model_paths.append(model_paths[torch.argmax(torch.FloatTensor(model_f1_score))])
     
     model_dirs = best_model_paths
+    print(model_dirs)
     
     for model_dir in model_dirs :
         model = torch.load(model_dir)
